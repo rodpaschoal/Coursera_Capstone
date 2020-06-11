@@ -4,4 +4,3 @@ numpy
 seaborn
 matplotlib
 psycopg2-binary
-PIL
