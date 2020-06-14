@@ -11,9 +11,9 @@ with st.echo('below'):
     #Sidebar widgets
     language = st.sidebar.selectbox('Language',['English','Português'])
     translate = True if language == 'English' else False
-    intro = st.sidebar.checkbox('Intro', value=True)
+    intro = st.sidebar.checkbox('Introduction', value=True)
     data = st.sidebar.checkbox('Data', value=True)
-    method = st.sidebar.checkbox('Method', value=True)
+    method = st.sidebar.checkbox('Methodology', value=True)
 
     #Function to google translate the website texts
     def english(text):
@@ -37,7 +37,7 @@ with st.echo('below'):
     if intro:
         #Main video
         st.video('https://www.youtube.com/watch?v=dSvVIYH7k24&t=200s')
-        st.markdown('###### Península, Barra da Tijuca, Rio de Janeiro /RJ')
+        st.markdown('###### Península, Barra da Tijuca, Rio de Janeiro / RJ, Brasil')
         st.markdown('---')
 
         #Introduction
@@ -56,6 +56,18 @@ with st.echo('below'):
         header = 'Metodologia'
         methodology = 'Através do endpoint \"explore\" com as coordenadas da Península, o Foursquare entrega uma lista de pontos de interesse nas redondezas com ID e categoria (restaurante, mall, café, atividade, dentre outros). Com a ID, usamos o endpoint \"likes\" e acessamos o número de likes dos usuários. \n\nA parte mais poderosa desse aplicativo é o algoritmo de inteligência artificial. \n\nUm robô busca em tempo real no Zap Imóveis todos apartamentos na Península e mostra aqueles com um desconto excessivo.\n\nA técnica utilizada é DBSCAN, algoritmo de machine learning capaz de identificar clusters, ou seja, conjuntos de dados que possuem muita similaridade entre si. No presente caso, imóveis com área, quartos, endereço e preços similares.\n\nA beleza dessa técnica é que ela também identifica outliers, que são dados totalmente dissimilares que não se encaixaram em nenhum conjunto. É justamente nos outliers onde vamos buscar os apartamentos com preços que não condizem com a realidade,i.e., as oportunidades.'
         draw(header, methodology)
+        st.graphviz_chart('''
+        digraph {
+            Coordinates -> Foursquare
+            Foursquare -> POI
+            POI -> This_App
+            Streets -> Zap
+            Zap -> Appartments
+            Appartments -> This_App
+            This_App -> Map
+            This_App -> Best_Deal
+            }
+        ''')
 
     #Source code (with st.echo() running)
     header = 'Código Fonte'
