@@ -1,21 +1,66 @@
-import pandas as pd
-import numpy as np
+#The imported libraries should be in Requirements config file in order to Heroku or Docker to work
 import streamlit as st
-#from PIL import Image
-#import os
-#curpath = os.path.dirname(os.path.abspath(__file__))
-#Multi-command to run streamlit in the current file: ctrl+m ctrl+s
 
-#st.write( curpath )
-st.title('Capstone Project')
-st.subheader('IBM Data Science Professional Certificate')
-st.write('@rodpaschoal')
-st.markdown('---')
-#img = Image.open('pegasus.jpg')
-st.image(image='pegasus.jpg', caption='Hello Capstone Project Course!', use_column_width=True)
-st.markdown('---')
-st.markdown('## What is this website?')
-st.markdown('I am very happy to code in python  \n and use this powerful tool to  \ncreate value with Data Science')
-st.header('Streamlit is more beautiful than Jupyter notebook')
-st.code('[1] print(\'Hello Capstone Project Course!\')')
-st.write('Hello *Capstone* Project Course! :sunglasses:')
+with st.echo('below'):
+    import pandas as pd
+    import numpy as np
+    import requests
+    from googletrans import Translator
+    translator = Translator()
+
+    #Sidebar widgets
+    language = st.sidebar.selectbox('Language',['English','Português'])
+    translate = True if language == 'English' else False
+    intro = st.sidebar.checkbox('Intro', value=True)
+    data = st.sidebar.checkbox('Data', value=True)
+    method = st.sidebar.checkbox('Method', value=True)
+
+    #Function to google translate the website texts
+    def english(text):
+        return translator.translate(text).text
+    
+    def draw(header,text):
+        if translate: 
+            header = english(header)
+            text = english(text)
+        st.header( header )
+        st.write( text )
+    
+    #Main page
+    title = 'Conheça a Península do Rio de Janeiro'
+    title = english(title) if translate else title
+    st.title(title)
+    st.markdown('by [rodpaschoal](https://github.com/rodpaschoal)')
+    st.markdown('---')
+
+    #Introduction
+    if intro:
+        #Main video
+        st.video('https://www.youtube.com/watch?v=dSvVIYH7k24&t=200s')
+        st.markdown('###### Península, Barra da Tijuca, Rio de Janeiro /RJ')
+        st.markdown('---')
+
+        #Introduction
+        header = 'Introdução'
+        introduction = 'A Península foi construída para trazer o contato com a natureza e a liberdade. As pessoas desfrutam do ar puro nas suas ruas arborizadas e aproveitam os parques com seus familiares.\n\n Apesar do cenário de chácara, o condomínio está no coração da Barra da Tijuca, com facilidades a poucos metros de caminhada.\n\n Essa página se destina àqueles interessados em conhecer mais sobre essa linda vizinhança.\n\n**Business Problem**\n\nAgora, vamos supor que você amou a vizinhança e deseja comprar um imóvel na Península. Como encontrar as melhores ofertas do mercado? Como fechar um bom negócio? '
+        draw(header, introduction)
+
+    #Data
+    if data:
+        header = 'Sobre os dados'
+        data_sources = 'A geolocalização das atrações é obtida por meio do Foursquare, o qual é fornecedor oficial do Apple Maps, Samsung, Uber, dentre outros aplicativos populares.\n\n O preço dos imóveis é atualizado em tempo real com dados do Zap Imóveis, a maior plataforma para compra e venda de imóveis do Brasil.'
+        draw(header, data_sources)
+    
+    #Methodology
+    if method:
+        header = 'Metodologia'
+        methodology = 'Através do endpoint \"explore\" com as coordenadas da Península, o Foursquare entrega uma lista de pontos de interesse nas redondezas com ID e categoria (restaurante, mall, café, atividade, dentre outros). Com a ID, usamos o endpoint \"likes\" e acessamos o número de likes dos usuários. \n\nA parte mais poderosa desse aplicativo é o algoritmo de inteligência artificial. \n\nUm robô busca em tempo real no Zap Imóveis todos apartamentos na Península e mostra aqueles com um desconto excessivo.\n\nA técnica utilizada é DBSCAN, algoritmo de machine learning capaz de identificar clusters, ou seja, conjuntos de dados que possuem muita similaridade entre si. No presente caso, imóveis com área, quartos, endereço e preços similares.\n\nA beleza dessa técnica é que ela também identifica outliers, que são dados totalmente dissimilares que não se encaixaram em nenhum conjunto. É justamente nos outliers onde vamos buscar os apartamentos com preços que não condizem com a realidade,i.e., as oportunidades.'
+        draw(header, methodology)
+
+    #Source code (with st.echo() running)
+    header = 'Código Fonte'
+    text = 'Este é um projeto open source desenvolvido para o trabalho final do certificado em Data Science da IBM.'
+    header = english( header ) if translate else header
+    text = english( text ) if translate else text
+    st.header( header )
+    st.write( text )
