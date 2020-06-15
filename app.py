@@ -158,7 +158,7 @@ with st.echo('below'):
             ),
         )
         #print using streamlit
-        st.plotly_chart( fig, use_container_width=True )
+        st.plotly_chart( fig ) #, use_container_width=True 
 
         #print neighborhood Results in table format
         st.write( df[['name','categories']] )
@@ -251,7 +251,7 @@ with st.echo('below'):
         header = 'Galeria de imagens'
         header = english(header) if translate else header
         st.header( header )
-        st.image('peninsula-joy.jpg')
+        #st.image('peninsula-joy.jpg')
         
     #Source code (with st.echo() running)
     header = 'Código Fonte'
