@@ -19,7 +19,7 @@ with st.echo('below'):
     intro = st.sidebar.checkbox('Introduction', value=True)
     data = st.sidebar.checkbox('Data', value=True)
     method = st.sidebar.checkbox('Methodology', value=True)
-    poi = st.sidebar.checkbox('Points of interest', value=True)
+    poi = st.sidebar.checkbox('The Neighborhood', value=True)
     gallery = st.sidebar.checkbox('Gallery', value=True)
 
     #Function to google translate the website texts
@@ -158,7 +158,7 @@ with st.echo('below'):
             ),
         )
         #print using streamlit
-        st.plotly_chart( fig ) #, use_container_width=True 
+        st.plotly_chart( fig, use_container_width=True )
 
         #print neighborhood Results in table format
         st.write( df[['name','categories']] )
