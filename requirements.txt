@@ -5,4 +5,4 @@ seaborn
 matplotlib
 psycopg2-binary
 googletrans
-folium
+plotly

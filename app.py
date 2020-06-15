@@ -8,7 +8,6 @@ with st.echo('below'):
 
     import pydeck as pdk
    
-    import plotly.express as px
     import os
 
     from googletrans import Translator
