@@ -251,7 +251,7 @@ with st.echo('below'):
         header = 'Galeria de imagens'
         header = english(header) if translate else header
         st.header( header )
-        #st.image('peninsula-joy.jpg')
+        st.image('peninsula-joy.jpg', use_column_width=True)
         
     #Source code (with st.echo() running)
     header = 'Código Fonte'
