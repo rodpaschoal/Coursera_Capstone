@@ -7,7 +7,8 @@ with st.echo('below'):
     import requests
 
     import pydeck as pdk
-    import folium
+   
+    import plotly.express as px
     import os
 
     from googletrans import Translator
@@ -78,7 +79,7 @@ with st.echo('below'):
 
     if poi:
         #Neighborhood results 
-        header = 'Resultados da vizinhança'
+        header = 'Conheça a vizinhança'
         text = 'Estão representados no mapa abaixo os principais pontos de interesse no entorno da Península:'
         draw(header,text)
 
@@ -127,27 +128,92 @@ with st.echo('below'):
 
         #peninsula in map
         peninsula_location = [-22.989906 ,-43.351655]
-        m = folium.Map(location=peninsula_location, zoom_start=14)
-        
-        # add markers to map
-        for lat, lng, name, cat in zip( df['lat'], df['lng'], df['name'], df['categories'] ):
-            label1 = '{} - {}'.format( name, cat )
-            label2 = folium.Popup(label1, parse_html=True)
-            folium.Marker(
-                [lat, lng],
-                popup=label2
-            ).add_to( m )  
 
-        #print neighborhood results map
-        st.write( m._repr_html_(), unsafe_allow_html=True )
+        #plotly graphics objects
+        import plotly.graph_objects as go
+
+        mapbox_access_token = os.environ.get('MAPBOX_TOKEN')
+
+        fig = go.Figure( go.Scattermapbox(
+                lat= df['lat'],
+                lon= df['lng'],
+                mode='markers',
+                marker=go.scattermapbox.Marker(
+                    size=9
+                ),
+                text=df['name'] + ' / ' + df['categories'],
+            ))
+
+        fig.update_layout(
+            autosize=True,
+            hovermode='closest',
+            mapbox=dict(
+                accesstoken=mapbox_access_token,
+                bearing=0,
+                center=dict(
+                    lat= peninsula_location[0],
+                    lon= peninsula_location[1]
+                ),
+                pitch=0,
+                zoom=13
+            ),
+        )
+        #print using streamlit
+        st.plotly_chart( fig ) #, use_container_width=True 
 
         #print neighborhood Results in table format
         st.write( df[['name','categories']] )
+
+        #user input to search more
+        text = 'O que mais deseja encontrar? (raio de 5 km)'
+        text = english(text) if translate else text
+        user_input = st.text_input(text)
+
+        #params to Foursquare API
+        url = 'https://api.foursquare.com/v2/venues/search'
+        params = dict(
+            client_id= foursquare_id,
+            client_secret= foursquare_secret,
+            v= version,
+            ll= peninsula,
+            limit=10,
+            radius=5000,
+            query= user_input
+        )
+        #function to call explore at Foursquare API
+        @st.cache
+        def call_search():
+            #try:
+                results = requests.get( url , params=params ).json()
+                venues = results['response']['venues']
+                df = pd.json_normalize( venues )
+                #collect just the information needed 
+                filtered_columns = ['name', 'categories','location.distance','location.address']
+                df = df.loc[:, filtered_columns]
+
+                #function to get the name of the category
+                def get_category_type(row):
+                    categories_list = row['categories']    
+                    if len(categories_list) == 0:
+                        return None
+                    else:
+                        return categories_list[0]['name']
+                #apply function           
+                df['categories'] = df.apply(get_category_type, axis=1)
+                # clean columns - remove .
+                df.columns = [col.split(".")[-1] for col in df.columns]
+                return df
+            #except:
+            #    st.error('Error querying Foursquare API')
+    
+    if user_input != '' : 
+        df2 = call_search()
+        st.write(df2)
     
     #Appartments results
-    header = 'Resultados dos apartamentos'
-    text = 'A query no Zap Imóveis resultou nos seguintes anúncios dentro do condomínio:'
-    draw(header,text)
+    #header = 'Resultados dos apartamentos'
+    #text = 'A query no Zap Imóveis resultou nos seguintes anúncios dentro do condomínio:'
+    #draw(header,text)
 
     #create a 3D map
     #MAPBOX_TOKEN = os.environ.get('MAPBOX_TOKEN')
