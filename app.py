@@ -20,7 +20,8 @@ with st.echo('below'):
     data = st.sidebar.checkbox('Data', value=True)
     method = st.sidebar.checkbox('Methodology', value=True)
     poi = st.sidebar.checkbox('The Neighborhood', value=True)
-    gallery = st.sidebar.checkbox('Gallery', value=True)
+    residences = st.sidebar.checkbox('The Residences', value=True)
+    gallery = st.sidebar.checkbox('Image Gallery', value=True)
 
     #Function to google translate the website texts
     def english(text):
@@ -79,7 +80,7 @@ with st.echo('below'):
     if poi:
         #Neighborhood results 
         header = 'Conheça a vizinhança'
-        text = 'Estão representados no mapa abaixo os principais pontos de interesse no entorno da Península:'
+        text = 'Estão representados no mapa abaixo as principais atrações no entorno da Península:'
         draw(header,text)
 
         #params to Foursquare API
@@ -210,9 +211,10 @@ with st.echo('below'):
         st.write(df2)
     
     #Appartments results
-    #header = 'Resultados dos apartamentos'
-    #text = 'A query no Zap Imóveis resultou nos seguintes anúncios dentro do condomínio:'
-    #draw(header,text)
+    if residences:
+        header = 'Resultados dos apartamentos'
+        text = 'A query no Zap Imóveis resultou nos seguintes anúncios dentro do condomínio:'
+        draw(header,text)
 
     #create a 3D map
     #MAPBOX_TOKEN = os.environ.get('MAPBOX_TOKEN')
