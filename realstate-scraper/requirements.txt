@@ -9,28 +9,31 @@ attrs==17.2.0             # via automat, service-identity
 automat==0.6.0            # via twisted
 cffi==1.10.0              # via cryptography
 constantly==15.1.0        # via twisted
-cryptography==1.9         # via pyopenssl
+cryptography==2.3         # via pyopenssl
 cssselect==1.0.1          # via parsel, scrapy
-dateparser==0.6.0
-fake-useragent==0.1.7
+dateparser==0.6.0         # via -r requirements.in
+enum34==1.1.10            # via cryptography
+fake-useragent==0.1.7     # via -r requirements.in
 hyperlink==17.1.1         # via twisted
 idna==2.5                 # via cryptography
 incremental==17.5.0       # via twisted
-jmespath==0.9.3
+ipaddress==1.0.23         # via cryptography
+jmespath==0.9.3           # via -r requirements.in
 lxml==3.8.0               # via parsel, scrapy
 parsel==1.2.0             # via scrapy
 pyasn1-modules==0.0.9     # via service-identity
 pyasn1==0.2.3             # via pyasn1-modules, service-identity
 pycparser==2.17           # via cffi
 pydispatcher==2.0.5       # via scrapy
-pymongo==3.4.0
+pymongo==3.4.0            # via -r requirements.in
 pyopenssl==17.0.0         # via scrapy, service-identity
 python-dateutil==2.6.0    # via dateparser
 pytz==2017.2              # via dateparser, tzlocal
 queuelib==1.4.2           # via scrapy
 regex==2017.6.7           # via dateparser
+ruamel.ordereddict==0.4.14  # via ruamel.yaml
 ruamel.yaml==0.15.6       # via dateparser
-scrapy==1.4.0
+scrapy==1.4.0             # via -r requirements.in
 service-identity==17.0.0  # via scrapy
 six==1.10.0               # via automat, cryptography, parsel, pyopenssl, python-dateutil, scrapy, w3lib
 twisted==17.5.0           # via scrapy
