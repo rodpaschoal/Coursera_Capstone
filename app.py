@@ -28,6 +28,8 @@ with st.echo('below'):
     from googletrans import Translator
     translator = Translator()
 
+    curpath = os.path.dirname(os.path.abspath(__file__))
+
     #Sidebar widgets
     language = st.sidebar.selectbox('Language',['English','Português'])
     translate = True if language == 'English' else False
@@ -228,7 +230,7 @@ with st.echo('below'):
     #Appartments results
     if residences:
         header = 'Conheça as residências'
-        text = 'Primeiro as configurações do algoritmo de machine learning.'
+        text = 'Primeiro vamos obter os dados.'
         draw(header,text)
 
         @st.cache
@@ -357,6 +359,7 @@ with st.echo('below'):
         searching = st.empty()
         bar = st.progress(0)
 
+        #Loop addresses and web scrape them all 
         for i,address in enumerate(addresses):
 
             address_search = address.lower().replace(' ','-').replace('í','i').replace('á','a').replace('é','e').replace('ã','a')
@@ -365,70 +368,79 @@ with st.echo('below'):
 
             searching.text( address + '...' )
             
-            df_one_address = scrape_residences( url )
-            df3 = df3.append( df_one_address, ignore_index=True )
+            #df_one_address = scrape_residences( url )
+            #df3 = df3.append( df_one_address, ignore_index=True )
 
             bar.progress( (i+1) / len(addresses) )
 
-        searching.text( 'Done! ' + str(len(df3.index)) + ' ads scanned' )
-        st.balloons()
-        #df3.to_csv('dataframe.csv') - If you want to save a copy
-        #df3 = pd.read_csv('dataframe.csv') - To read the copy
-        #The CSV has a first columns empty
-        #df3.drop('Unnamed: 0', axis=1,inplace=True)
+        searching.text( 'Done! ' + str(len(df3.index)) + ' ads scraped' )
         
         #Data wrangling
-        df3['link'] = 'www.vivareal.com.br' + df3['link']
-        df3['link'] = df3['link'].str.strip('/?__vt=vt:a')
-        df3['link'] = df3['link'].str.strip('/?__vt=vt:b')
-        df3['link'] = df3['link'].str.strip('/?__vt=vt:c')
-        df3['link'] = df3['link'].str.strip('/?__vt=il')
-        df3['vivareal-id'] = df3['link'].str[-10:]
-        df3['vivareal-id'] = df3['vivareal-id'].str.strip('d-') 
-        df3['price'] = df3['price'].str.strip().str.strip('R$').str.replace('.','')
-        df3['condo'] = df3['condo'].str.strip().str.strip('R$').str.replace('.','')
+        def clean_dataset( df3 ):
+            df3['link'] = 'www.vivareal.com.br' + df3['link']
+            df3['link'] = df3['link'].str.strip('/?__vt=vt:a')
+            df3['link'] = df3['link'].str.strip('/?__vt=vt:b')
+            df3['link'] = df3['link'].str.strip('/?__vt=vt:c')
+            df3['link'] = df3['link'].str.strip('/?__vt=il')
+            df3['vivareal-id'] = df3['link'].str[-10:]
+            df3['vivareal-id'] = df3['vivareal-id'].str.strip('d-') 
+            df3['price'] = df3['price'].str.strip().str.strip('R$').str.replace('.','')
+            df3['condo'] = df3['condo'].str.strip().str.strip('R$').str.replace('.','')
 
-        #Address - drop NaN
-        df3.dropna(subset=['address'], inplace=True)
-        df3['address'] = df3['address'].apply(lambda x: x.split('-')[0].strip().split(',')[0] )
-        #Keep just addresses inside Peninsula addresses
-        df3['address'] = df3[ df3['address'].isin( addresses ) ]['address']
+            #Address - drop NaN
+            df3.dropna(subset=['address'], inplace=True)
+            df3['address'] = df3['address'].apply(lambda x: x.split('-')[0].strip().split(',')[0] )
+            #Keep just addresses inside Peninsula addresses
+            df3['address'] = df3[ df3['address'].isin( addresses ) ]['address']
 
-        #Drop ads with no defined area
-        df3 = df3[ ~df3['area'].str.contains('-') ] #also may drop paid banners
+            #Drop ads with no defined area
+            df3 = df3[ ~df3['area'].str.contains('-') ] #also may drop paid banners
 
-        #Drop ads with no price
-        df3 = df3[ ~(df3['price'] == 'Sob Consulta') ] #also may drop paid banners
-        df3 = df3[ ~df3['price'].str.contains('A partir de') ] #also may drop paid banners
+            #Drop ads with no price
+            df3 = df3[ ~(df3['price'] == 'Sob Consulta') ] #also may drop paid banners
+            df3 = df3[ ~df3['price'].str.contains('A partir de') ] #also may drop paid banners
 
-        #Drop ads with defined number of rooms, bathrooms or garages are a range (like 2-3) split it
-        df3 = df3[ ~df3['rooms'].str.contains('-') ]
-        df3 = df3[ ~df3['bathroom'].str.contains('-') ]
-        df3 = df3[ ~df3['garages'].str.contains('-') ]
+            #Drop ads with defined number of rooms, bathrooms or garages are a range (like 2-3) split it
+            df3 = df3[ ~df3['rooms'].str.contains('-') ]
+            df3 = df3[ ~df3['bathroom'].str.contains('-') ]
+            df3 = df3[ ~df3['garages'].str.contains('-') ]
 
-        #Feature engineering - Important metric
-        df3['price/m2'] = df3['price'].astype('int') / df3['area'].astype('int')
+            #Feature engineering - Important metric
+            df3['price/m2'] = df3['price'].astype('int') / df3['area'].astype('int')
 
-        #Drop ads with the same link
-        df3.drop_duplicates(subset='link', inplace=True)
-        
-        #Drop title as it does not add much information
-        df3.drop('title', axis=1, inplace=True)
+            #Drop ads with the same link
+            df3.drop_duplicates(subset='link', inplace=True)
+            
+            #Drop title as it does not add much information
+            df3.drop('title', axis=1, inplace=True)
 
-        #Drop suites as the informations are not reliable
-        df3.drop('suites', axis=1, inplace=True)
+            #Drop suites as the informations are not reliable
+            df3.drop('suites', axis=1, inplace=True)
 
-        #Drop link as we now parsed the VivaReal ID
-        #df3.drop('link', axis=1, inplace=True)
+            #Drop link as we now parsed the VivaReal ID
+            #df3.drop('link', axis=1, inplace=True)
 
-        #Convert to int
-        numeric_features = ['area','rooms','bathroom','garages','price','price/m2']
-        df3[numeric_features] = df3[numeric_features].astype('int')
+            #Convert to int
+            numeric_features = ['area','rooms','bathroom','garages','price','price/m2']
+            df3[numeric_features] = df3[numeric_features].astype('int')
 
-        #Clip strange informations
-        df3['garages'] = df3['garages'].clip(0,6)
-        df3['bathroom'] = df3['bathroom'].clip(0,6)
-        df3['rooms'] = df3['rooms'].clip(0,6)
+            #Clip strange informations
+            df3['garages'] = df3['garages'].clip(0,6)
+            df3['bathroom'] = df3['bathroom'].clip(0,6)
+            df3['rooms'] = df3['rooms'].clip(0,6)
+
+            return df3
+
+        #To save a copy
+        #df3 = clean_dataset( df3 )
+        #df3.to_csv(curpath + '/dataframe.csv')
+
+        #To read a copy
+        url_github = 'https://raw.githubusercontent.com/rodpaschoal/Coursera_Capstone/master/dataframe.csv'
+        df3 = pd.read_csv( url_github , error_bad_lines=False)
+        searching.text( 'Done! ' + str(len(df3.index)) + ' ads read from csv' )
+        #If The CSV has a first empty columns
+        #df3.drop('Unnamed: 0', axis=1,inplace=True)    
 
         #Filter dataframe
         st.subheader('Filter ads')
@@ -452,7 +464,7 @@ with st.echo('below'):
             X[column] = StandardScaler().fit_transform( X[[column]] )
 
         #Unsupervised machine learning clustering algorithm
-        st.subheader('Artificial Intelligence')
+        st.subheader('Machine Learning')
         eps = st.slider('DBSCAN eps: minimum radius between each other\'s features (the lower eps the higher similarity)', 0.0, 1.0, 1.0)
         min_samples = st.slider('DBSCAN min_samples: minimum number of ads with same features to form a cluster', 1, 50, 35)
 
