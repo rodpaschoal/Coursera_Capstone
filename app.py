@@ -33,11 +33,15 @@ with st.echo('below'):
     #Sidebar widgets
     language = st.sidebar.selectbox('Language',['English','Português'])
     translate = True if language == 'English' else False
+
+    st.sidebar.subheader('Sections')
     intro = st.sidebar.checkbox('Introduction', value=True)
     data = st.sidebar.checkbox('Data', value=True)
     method = st.sidebar.checkbox('Methodology', value=True)
     poi = st.sidebar.checkbox('The Neighborhood', value=True)
     residences = st.sidebar.checkbox('The Residences', value=True)
+    discussion = st.sidebar.checkbox('Discussion', value=True)
+    conclusion = st.sidebar.checkbox('Conclusion', value=True)
     gallery = st.sidebar.checkbox('Image Gallery', value=True)
 
     #Function to google translate the website texts
@@ -241,52 +245,42 @@ with st.echo('below'):
                 one_page = pd.DataFrame()
 
                 for i,residence in enumerate( data ):
-
                     try:
                         title = residence.h2.a.text
                     except:
                         title = None
-
                     try:
                         link = residence.h2.a['href']
                     except:
                         link = None
-
                     try:
                         address = residence.find('span', class_='property-card__address js-property-card-address js-see-on-map').text
                     except:
                         address = None
-
                     try:
                         area = residence.find('span', class_='property-card__detail-value js-property-card-value property-card__detail-area js-property-card-detail-area').text
                     except:
                         area = None
-
                     try:
                         rooms = residence.find('li', class_='property-card__detail-item property-card__detail-room js-property-detail-rooms').text.split()[0]
                     except:
                         rooms = None
-
                     try:
                         suites = residence.find('li', class_='property-card__detail-item property-card__detail-item-extra js-property-detail-suites').text.split()[0]
                     except:
                         suites = None
-
                     try:
                         bathroom = residence.find('li', class_='property-card__detail-item property-card__detail-bathroom js-property-detail-bathroom').text.split()[0]
                     except:
                         bathroom = None
-
                     try:
                         garages = residence.find('li', class_='property-card__detail-item property-card__detail-garage js-property-detail-garages').text.split()[0]
                     except:
                         garages = None
-
                     try:
                         price = residence.find('div', class_='property-card__price js-property-card-prices js-property-card__price-small').text
                     except:
                         price = None
-                    
                     try:
                         condo = residence.find('strong', class_='js-condo-price').text
                     except:
@@ -320,12 +314,14 @@ with st.echo('below'):
             chrome_options.add_argument("--no-sandbox")
             driver = webdriver.Chrome(executable_path=path_chrome, options=chrome_options)
 
-            driver.get( url )
+            try:
+                driver.get( url )
+            except Exception as e:
+                searching.text(e)
 
             for page in range(max_pages): #try to scrape up to max_pages
                 
                 try:
-
                     source = driver.page_source
                     soup = BeautifulSoup( source, 'lxml' ) #'lxml'
 
@@ -347,35 +343,14 @@ with st.echo('below'):
                     time.sleep( np.random.randint(0,3) )
 
                 except Exception as e:
+                    searching.text(e)
                     continue
             
             #when the loop is finished
             driver.close()  
             return results 
     
-        addresses = ['Rua Jacarandás da Península','Avenida Flamboyants da Península','Avenida das Acácias da Península','Rua Bauhíneas da Península','Rua Pau Brasil da Península','Rua das Bromélias da Península', 'Avenida João Cabral de Mello Neto']
-
-        df3 = pd.DataFrame()
-        searching = st.empty()
-        bar = st.progress(0)
-
-        #Loop addresses and web scrape them all 
-        for i,address in enumerate(addresses):
-
-            address_search = address.lower().replace(' ','-').replace('í','i').replace('á','a').replace('é','e').replace('ã','a')
-        
-            url = f'https://www.vivareal.com.br/venda/rj/rio-de-janeiro/zona-oeste/barra-da-tijuca/{address_search}/apartamento_residencial/'
-
-            searching.text( address + '...' )
-            
-            #df_one_address = scrape_residences( url )
-            #df3 = df3.append( df_one_address, ignore_index=True )
-
-            bar.progress( (i+1) / len(addresses) )
-
-        searching.text( 'Done! ' + str(len(df3.index)) + ' ads scraped' )
-        
-        #Data wrangling
+        @st.cache
         def clean_dataset( df3 ):
             df3['link'] = 'www.vivareal.com.br' + df3['link']
             df3['link'] = df3['link'].str.strip('/?__vt=vt:a')
@@ -392,6 +367,8 @@ with st.echo('below'):
             df3['address'] = df3['address'].apply(lambda x: x.split('-')[0].strip().split(',')[0] )
             #Keep just addresses inside Peninsula addresses
             df3['address'] = df3[ df3['address'].isin( addresses ) ]['address']
+            #Prepare address to visualization
+            df3['address'] = df3['address'].str.replace('Rua','').str.replace('da Península','').str.replace('Avenida','').str.replace('de Mello Neto','')
 
             #Drop ads with no defined area
             df3 = df3[ ~df3['area'].str.contains('-') ] #also may drop paid banners
@@ -430,20 +407,59 @@ with st.echo('below'):
             df3['rooms'] = df3['rooms'].clip(0,6)
 
             return df3
+        
+        df3 = pd.DataFrame()
+        searching = st.empty()
+        bar = st.progress(0)
 
-        #To save a copy
-        #df3 = clean_dataset( df3 )
-        #df3.to_csv(curpath + '/dataframe.csv')
+        #Add options in sidebar to Tune the Model
+        st.sidebar.subheader('Tune Machine Learning')
+        eps = st.sidebar.slider('DBSCAN eps: minimum radius between each other\'s features (the lower eps the higher similarity)', 0.0, 1.0, 1.0)
+        min_samples = st.sidebar.slider('DBSCAN min_samples: minimum number of ads with same features to form a cluster', 1, 50, 35)
 
-        #To read a copy
+        if st.sidebar.button('Run web scrapper & Refresh dataframe'):
+
+            addresses = ['Rua Jacarandás da Península','Avenida Flamboyants da Península','Avenida das Acácias da Península','Rua Bauhíneas da Península','Rua Pau Brasil da Península','Rua das Bromélias da Península', 'Avenida João Cabral de Mello Neto']
+
+            #Loop addresses and web scrape them all 
+            for i,address in enumerate(addresses):
+
+                address_search = address.lower().replace(' ','-').replace('í','i').replace('á','a').replace('é','e').replace('ã','a')
+        
+                url = f'https://www.vivareal.com.br/venda/rj/rio-de-janeiro/zona-oeste/barra-da-tijuca/{address_search}/apartamento_residencial/'
+
+                searching.text( address + '...' )
+            
+                df_one_address = scrape_residences( url )
+                df3 = df3.append( df_one_address, ignore_index=True )
+
+                bar.progress( (i+1) / len(addresses) )
+
+            searching.text( 'Done! ' + str(len(df3.index)) + ' ads scraped' )
+            #Data wrangling
+            df3 = clean_dataset( df3 )
+            #Save a copy
+            df3.to_csv(curpath + '/dataframe.csv')
+
+        #To read a copy already saved
         url_github = 'https://raw.githubusercontent.com/rodpaschoal/Coursera_Capstone/master/dataframe.csv'
         df3 = pd.read_csv( url_github , error_bad_lines=False)
         searching.text( 'Done! ' + str(len(df3.index)) + ' ads read from csv' )
+        bar.progress( 1.0 )
+
         #If The CSV has a first empty columns
-        #df3.drop('Unnamed: 0', axis=1,inplace=True)    
+        #df3.drop('Unnamed: 0', axis=1,inplace=True)  
+
+        #Last modified
+        try:
+            last_modified = time.ctime( os.path.getmtime( curpath + '/dataframe.csv' ) )
+            st.text('Last modified - ' + last_modified )
+        except Exception as e:
+            st.text(e)  
 
         #Filter dataframe
-        st.subheader('Filter ads')
+        #st.write('---')
+        st.subheader('Filters')
         filter_rooms = st.slider('Max Rooms', 1,6,6)
         filter_area = st.slider('Max Area',1,600,600)
         filter_price = st.slider('Max Price',1,10000000,10000000)
@@ -452,7 +468,7 @@ with st.echo('below'):
         df3 = df3[ df3['area'] <= filter_area ]
         df3 = df3[ df3['price'] <= filter_price ]
         df3 = df3[ df3['price/m2'] <= filter_pricem2 ]
-        st.write('---')
+        #st.write('---')
 
         #Selecting the numeric features to use and then transform categorical in numeric
         features = ['address','area','rooms','bathroom','garages','price']
@@ -464,10 +480,6 @@ with st.echo('below'):
             X[column] = StandardScaler().fit_transform( X[[column]] )
 
         #Unsupervised machine learning clustering algorithm
-        st.subheader('Machine Learning')
-        eps = st.slider('DBSCAN eps: minimum radius between each other\'s features (the lower eps the higher similarity)', 0.0, 1.0, 1.0)
-        min_samples = st.slider('DBSCAN min_samples: minimum number of ads with same features to form a cluster', 1, 50, 35)
-
         model = DBSCAN( eps=eps, min_samples=min_samples )
         model.fit( X )
         X['cluster'] = model.labels_
@@ -486,17 +498,22 @@ with st.echo('below'):
         n_small = len( small_best_deals.index )
         df3.loc[ small_best_deals.index , 'cluster' ] = '-3'
 
-        st.subheader('Double click cluster -3')
+        text = 'Resultados'
+        text = english(text) if translate else text
+        st.subheader( text )
+        st.write( len(df3['cluster'].unique()) , 'Clusters' )
+        
         #Visualize clusters
-        fig = px.scatter(df3, 
-                        y="price/m2", 
-                        x="address", 
-                        color="cluster",
-                        size='area', 
+        fig = px.scatter_3d(df3, 
+                        x='price',
+                        y='address', 
+                        z='rooms', 
+                        color='cluster',
+                        #size='rooms', 
                         hover_data=['price','rooms','bathroom','garages','condo','vivareal-id','address'])
 
         #fig = px.box(df3, x="address", y="price/m2")
-        fig.update_layout(yaxis=dict(range=[5000,16000]))
+        #fig.update_layout(yaxis=dict(range=[5000,16000]))
         st.write( fig )
 
         #Print dataframe with filters filters
@@ -515,7 +532,7 @@ with st.echo('below'):
             text4 = english(text4) if translate else text4
             st.write( text4 )
 
-        st.markdown( '[VivaReal website](www.vivareal.com.br)' )
+        st.markdown( '[VivaReal website](https://www.vivareal.com.br)' )
 
         if st.checkbox('Create Links'):
             for link in small_best_deals['link']: 
