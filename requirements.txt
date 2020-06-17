@@ -6,3 +6,6 @@ matplotlib
 psycopg2-binary
 googletrans
 plotly
+selenium
+bs4
+sklearn
