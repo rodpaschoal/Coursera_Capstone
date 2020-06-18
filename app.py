@@ -4,27 +4,21 @@ import streamlit as st
 with st.echo('below'):
     import pandas as pd
     import numpy as np
-    import requests
     import os
-    
     import time
+
     from selenium import webdriver
     from selenium.webdriver.common.keys import Keys
     from selenium.webdriver.support.ui import Select
     from selenium.webdriver.support.ui import WebDriverWait
-
-    #import urllib
+    import requests
     from bs4 import BeautifulSoup
 
     from sklearn.cluster import DBSCAN
-    from sklearn.preprocessing import MinMaxScaler
     from sklearn.preprocessing import StandardScaler
-    import matplotlib.pyplot as plt
     import plotly.graph_objects as go
     import plotly.express as px
 
-    #import pydeck as pdk
-   
     from googletrans import Translator
     translator = Translator()
 
@@ -59,7 +53,7 @@ with st.echo('below'):
     title = 'Conheça a Península do Rio de Janeiro'
     title = english(title) if translate else title
     st.title(title) 
-    st.markdown('by [rodpaschoal](https://github.com/rodpaschoal)')
+    st.markdown('Git repo [@rodpaschoal](https://github.com/rodpaschoal)')
     st.markdown('---')
 
     #Introduction
@@ -77,13 +71,13 @@ with st.echo('below'):
     #Data
     if data:
         header = 'Sobre os dados'
-        data_sources = 'A geolocalização das atrações é obtida por meio do Foursquare, o qual é fornecedor oficial do Apple Maps, Samsung, Uber, dentre outros aplicativos populares.\n\n O preço dos imóveis é atualizado em tempo real com dados do Viva Real, uma das maiores plataformas para compra e venda de imóveis do Brasil.'
+        data_sources = 'A geolocalização é obtida por meio do Foursquare, o qual é fornecedor oficial do Apple Maps, Samsung, Uber, dentre outros aplicativos populares.\n\n O preço dos imóveis é atualizado em tempo real com dados do Viva Real, uma das maiores plataformas para compra e venda de imóveis do Brasil.'
         draw(header, data_sources)
     
     #Methodology
     if method:
         header = 'Metodologia'
-        methodology = 'Através do endpoint \"explore\" com as coordenadas da Península, o Foursquare entrega uma lista de pontos de interesse nas redondezas com endereço e categoria (restaurante, mall, café, atividade, dentre outros). A biblioteca plotly é utilizada para desenhar o mapa com os marcadores nos respectivos endereços. \n\nA parte mais poderosa desse aplicativo é o algoritmo de inteligência artificial. \n\n O robô busca em tempo real no Viva Real todos apartamentos na Península e mostra aqueles com os maiores descontos.\n\nA técnica utilizada é DBSCAN, algoritmo de machine learning capaz de identificar clusters, ou seja, conjuntos de dados que possuem muita similaridade entre si. No presente caso, imóveis com área, quartos, endereço e preços similares.\n\nA beleza dessa técnica é que ela também identifica outliers, que são dados totalmente dissimilares que não se encaixaram em nenhum conjunto. É justamente nos outliers onde vamos buscar os apartamentos com preços que não condizem com a realidade,i.e., as oportunidades.'
+        methodology = 'Este projeto foi desenvolvido em Python, a linguagem de programação mais popular no mundo. As principais bibliotecas utilizadas foram: Pandas, Plotly, Sklearn, Beautifulsoup, Selenium e Streamlit para geração desta página.\n\n Para obter a geolocalização de pontos interessantes, usamos o endpoint \"explore\" na Location API do Foursquare, a qual entrega uma lista de locais mais interessantes nas redondezas e a categoria (restaurante, mall, café, atividade, dentre outros). A biblioteca plotly é utilizada para desenhar o mapa com os marcadores nos respectivos endereços. O endpoint \"search\" foi utilizado para buscar locais solicitados pelo usuário. \n\nA parte mais poderosa desse aplicativo é o algoritmo de machine learning. \n\n O robô busca em tempo real no Viva Real todos apartamentos na Península e mostra aqueles com os maiores descontos.\n\nA técnica utilizada é DBSCAN, algoritmo de machine learning capaz de identificar clusters, ou seja, conjuntos de dados que possuem muita similaridade entre si. No presente caso, imóveis com área, quartos, endereço e preços similares.\n\nA beleza dessa técnica é que ela também identifica outliers, que são dados totalmente dissimilares que não se encaixaram em nenhum conjunto. É justamente nos outliers onde vamos buscar os apartamentos com preços que não condizem com a realidade,i.e., as oportunidades.'
         draw(header, methodology)
         st.graphviz_chart('''
         digraph {
@@ -184,7 +178,11 @@ with st.echo('below'):
         st.write( df[['name','categories']] )
 
         #user input to search more
-        text = 'O que mais deseja encontrar? (raio de 5 km)'
+        text = 'O que mais deseja encontrar?'
+        text = english(text) if translate else text
+        st.subheader( text )
+
+        text = 'Procure no raio de 5 km da Península:'
         text = english(text) if translate else text
         user_input = st.text_input(text)
 
@@ -390,6 +388,9 @@ with st.echo('below'):
 
             #Drop ads with the same link
             df3.drop_duplicates(subset='link', inplace=True)
+
+            #Drop ads with the same id
+            df3.drop_duplicates(subset='vivareal-id', inplace=True)
             
             #Drop title as it does not add much information
             df3.drop('title', axis=1, inplace=True)
@@ -417,8 +418,8 @@ with st.echo('below'):
 
         #Add options in sidebar to Tune the Model
         st.sidebar.subheader('Tune Machine Learning')
-        eps = st.sidebar.slider('DBSCAN eps: minimum radius between each other\'s features (the lower eps the higher similarity)', 0.0, 1.0, 1.0)
-        min_samples = st.sidebar.slider('DBSCAN min_samples: minimum number of ads with same features to form a cluster', 1, 50, 35)
+        eps = st.sidebar.slider('DBSCAN eps: minimum radius between each other\'s features (the lower eps the higher similarity)', 0.0, 1.0, 0.3)
+        min_samples = st.sidebar.slider('DBSCAN min_samples: minimum number of ads with same features to form a cluster', 1, 50, 5)
 
         if st.sidebar.button('Run web scrapper & Refresh dataframe'):
 
@@ -444,15 +445,21 @@ with st.echo('below'):
             #Save a copy
             df3.to_csv(curpath + '/dataframe.csv')
 
-        #To read a copy already saved
-        url_github = 'https://raw.githubusercontent.com/rodpaschoal/Coursera_Capstone/master/dataframe.csv'
-        df3 = pd.read_csv( url_github , error_bad_lines=False)
+        @st.cache
+        def read_dataframe():
+            #To read a copy already saved
+            #url_github = 'https://raw.githubusercontent.com/rodpaschoal/Coursera_Capstone/master/dataframe.csv'
+            #df3 = pd.read_csv( url_github , error_bad_lines=False)
+
+            df3 = pd.read_csv( curpath + '/dataframe.csv' , error_bad_lines=False)
+
+            #If The CSV has a first empty columns
+            #df3.drop('Unnamed: 0', axis=1,inplace=True) 
+            return df3 
+        
+        df3 = read_dataframe()
         searching.text( 'Done! ' + str(len(df3.index)) + ' ads read from csv' )
         bar.progress( 1.0 )
-
-        #If The CSV has a first empty columns
-        #df3.drop('Unnamed: 0', axis=1,inplace=True)  
-
         #Last modified
         try:
             last_modified = time.ctime( os.path.getmtime( curpath + '/dataframe.csv' ) )
@@ -472,14 +479,14 @@ with st.echo('below'):
         df3 = df3[ df3['price'] <= filter_price ]
         df3 = df3[ df3['price/m2'] <= filter_pricem2 ]
         #st.write('---')
-
+        
         #Selecting the numeric features to use and then transform categorical in numeric
         features = ['address','area','rooms','bathroom','garages','price']
         X = pd.get_dummies( df3[features], columns=['address'], prefix='', prefix_sep='' )
 
         #For distances it is important for to be in the same range (0,1)
         for column in X:
-            #X[column] = MinMaxScaler().fit_transform( X[[column]] )
+            #X[column] = MinMaxScaler().fit_transform( X[[column]] ) - not a good idea
             X[column] = StandardScaler().fit_transform( X[[column]] )
 
         #Unsupervised machine learning clustering algorithm
@@ -488,63 +495,83 @@ with st.echo('below'):
         X['cluster'] = model.labels_
         df3['cluster'] = model.labels_
 
-        #Set to string to Plotly recognize as category
+        #Set to string to Plotly recognize as category later when plot visual
         df3['cluster'] = df3['cluster'].astype('str')
         
         # Best Deal defined - an outlier with very low price/m2 for its address
-        best_deals = df3[ (df3['cluster'] == '-1') & (df3['price/m2'] < 10000) ]
+        best_deals = df3[ (df3['cluster'] == '-1') & ( df3['price/m2'] < df3['price/m2'].mean() ) ]
         n = len( best_deals.index )
         df3.loc[ best_deals.index , 'cluster'] = '-2'
 
         #Many penthouses in cluster -2, let us create cluster -3 with apartments not greater than 150 m2
-        small_best_deals = df3[ (df3['cluster'] == '-2') & (df3['area'] < 150) ]
+        small_best_deals = df3[ (df3['cluster'] == '-2') & (df3['rooms'] <= 3) ]
         n_small = len( small_best_deals.index )
         df3.loc[ small_best_deals.index , 'cluster' ] = '-3'
 
+        #Show Results
         text = 'Resultados'
         text = english(text) if translate else text
         st.subheader( text )
         st.write( len(df3['cluster'].unique()) , 'Clusters' )
+        st.text( 'Cluster (-1) : Bad offers' )
+        st.text( 'Cluster (-2) : Best 4+ rooms apartments' )
+        st.text( 'Cluster (-3) : Best 3- rooms apartments' )
+        st.text( 'Others : Normal offers' )
+        st.info( 'Hint: double click in right legend isolate a selected cluster' )
         
-        #Visualize clusters
-        fig = px.scatter_3d(df3, 
-                        x='price/m2',
-                        y='address', 
-                        z='rooms', 
-                        color='cluster',
-                        #size='rooms', 
-                        hover_data=['price','rooms','bathroom','garages','condo','vivareal-id','address'],
-                        color_discrete_sequence=px.colors.qualitative.G10
-                        )
-        st.write( fig )
+        #Visualize clusters and result dataframe
+        #@st.cache
+        def vis_results(df3):
+            fig = px.scatter_3d(
+                            df3, 
+                            x='price/m2',
+                            y='address', 
+                            z='rooms', 
+                            color='cluster',
+                            #size='price/m2',
+                            #symbol='rooms', 
+                            hover_data=['price','area','price/m2','rooms','bathroom','garages','condo','vivareal-id','address'],
+                            color_discrete_sequence=px.colors.qualitative.G10
+                            )
+            st.write( fig )
 
-        #Print dataframe with filters filters
-        cols = ['cluster','vivareal-id','price/m2','price','area','rooms','address','bathroom','garages','condo']
-        df3 = df3[cols]        
-        df3['cluster'] = df3['cluster'].astype('int')
-        df3.sort_values('cluster', inplace=True )
-        st.write( df3 )
+            #Print dataframe with filters filters
+            cols = ['cluster','vivareal-id','price/m2','price','area','rooms','address','bathroom','garages','condo']
+            df3 = df3[cols]        
+            df3['cluster'] = df3['cluster'].astype('int')
+            df3.sort_values('cluster', inplace=True )
+            st.write( df3 )
 
-        if n > 0:
-            text2 = 'Anúncios na tabela com preço por m2 em promoção, verifique o cluster -3!'
-            text2 = english(text2) if translate else text2
-            st.write( n_small , text2 )
-            st.write( len(df3.index) , 'Total' ) 
-        else:
-            text4 = 'Não parece ter uma barganha nesse momento'
-            text4 = english(text4) if translate else text4
-            st.write( text4 )
+            if n > 0:
+                text2 = 'Ofertas na tabela com preço por m2 em promoção, verifique o cluster -3!'
+                text2 = english(text2) if translate else text2
+                st.write( n_small , text2 )
+                st.write( len(df3.index) , 'Total' ) 
+            else:
+                text4 = 'Não parece ter uma barganha nesse momento'
+                text4 = english(text4) if translate else text4
+                st.write( text4 )
+
+        vis_results(df3)
 
         st.markdown( '[VivaReal website](https://www.vivareal.com.br)' )
 
-        if st.checkbox('Create Links'):
-            for link in small_best_deals['link']: 
-                st.write( link )
+        if st.checkbox('Show Links'):
+            for link in small_best_deals['link']:
+                st.write(link) 
 
     if discussion:
         header = 'Discussão'
-        text = 'Na tabela abaixo pode ser verificado o dataframe no qual cada linha é um cluster identificado pelo algoritmo.'
+        text = 'Como meu primeiro projeto de inteligência artificial, fiquei impressionado com a velocidade em que milhares de anúncios foram capturados, analisados e classificados.'
         draw(header,text)
+
+        text='A facilidade de deploy e a acertividade das classificações do DBSCAN quando abri os anúncios, me fez perceber como ele pode ajudar para fazer análises preliminares de dados.'
+        text = english(text) if translate else text
+        st.write( text )
+
+        text = 'Na tabela abaixo pode ser verificado o dataframe no qual cada linha é um cluster identificado pelo algoritmo, com o valor médio de cada característica.'
+        text = english(text) if translate else text
+        st.write( text )
 
         df3_by_cluster = df3.groupby('cluster').mean()
         df3_by_cluster['n_samples'] = df3.groupby('cluster').count()['price']
@@ -553,6 +580,74 @@ with st.echo('below'):
 
         st.write( df3_by_cluster )
 
+        text = 'Ao analisar os clusters -2 e -3, verifica-se um preço por m2 muito abaixo da média, que é:'
+        text = english(text) if translate else text
+        st.write( text )
+
+        mean_pricem2 = df3['price/m2'].mean()
+        st.info( 'R$ {:.0f}/m2'.format(mean_pricem2) )
+
+        text = 'Na verdade, a faixa dos 25% mais baratos é:'
+        text = english(text) if translate else text
+        st.write( text )
+
+        quartile_pricem2 = df3['price/m2'].quantile(.25)
+        st.info( 'R$ {:.0f}/m2'.format(quartile_pricem2) )
+
+        text = 'Esta era exatamente a proposta do projeto, encontrar as melhores ofertas para os clientes.'
+        text = english(text) if translate else text
+        st.write( text )
+
+        text = 'Pontos de atenção'
+        text = english(text) if translate else text
+        st.subheader( text )
+
+        text = 'Uma limitação do modelo é incluir muitas coberturas (penthouses) como ofertas diferenciadas, pois como não existem muitos anúncios similares, ele não é capaz de compará-las.'
+        text = english(text) if translate else text
+        st.write( text )
+
+        text = 'Um cuidado com o uso é notar que o modelo captura anúncios falsos, onde o preço é claramente um golpe para atrair clientes. Prática vulgarmente conhecida como boi de piranha.'
+        text = english(text) if translate else text
+        st.write( text )
+
+        text = 'Melhorias futuras'
+        text = english(text) if translate else text
+        st.subheader( text )
+
+        text = 'Uma sugestão para trabalhos futuros seria otimizar o tuning do modelo com métodos como \"knee point\" para identificar o melhor \"eps\" automaticamente. Outra sugestão seria avaliá-lo através métricas de eficiência.'
+        text = english(text) if translate else text
+        st.write( text )
+
+    if conclusion:
+        header = 'Conclusão'
+        text = 'Para encontrar uma boa oferta, costumamos filtrar e ordenar os resultados em páginas de busca de imóveis.'
+        draw(header,text)
+
+        text = 'Apesar de intuitivo, pode ser exaustivo quando existem milhares de anúncios para analisar em apenas um bairro.'
+        text = english(text) if translate else text
+        st.write( text )
+
+        text = 'Sem contar que pode nos levar ao erro, pois quando filtramos para apartamentos com 2 quartos, podemos estar perdendo a oportunidade de ver um apartamento com 3 quartos que está sendo vendido pelo mesmo preço, por exemplo.'
+        text = english(text) if translate else text
+        st.write( text )
+
+        text = 'Com o DBSCAN, um modelo de identificação de clusters, nós mostramos que é possível encontrar apartamentos com as mesmas características (área, dormitórios, banheiros, vagas de garagem e localização), porém com preços totalmente diferentes.'
+        text = english(text) if translate else text
+        st.write( text )
+
+        text = 'O que é interessante é que o modelo conseguiu capturar isso para todas as combinações possíveis em um bairro, analisando cerca de 2000 anúncios em tempo real, i.e., sempre que entram anúncios novos ele refaz novamente o processo.'
+        text = english(text) if translate else text
+        st.write( text )
+
+        text = 'Na seção \"Discussão\" vimos que é possível economizar até 75% do preço. Essa é uma interessante evidência de como a inteligência artificial pode ajudar pessoas a fazer melhores escolhas.'
+        text = english(text) if translate else text
+        st.write( text )
+
+        text = 'Espero que esse projeto contribuir de alguma forma e estou muito feliz de compartilhá-lo para o mundo.'
+        text = english(text) if translate else text
+        st.write( text )
+
+        st.code(' print(\'Hello World\') ')
 
     #Gallery
     if gallery:
@@ -565,7 +660,4 @@ with st.echo('below'):
     st.write('---')
     header = 'Código Fonte'
     text = 'Este é um projeto open source desenvolvido para o trabalho final do certificado em Data Science da IBM.'
-    header = english( header ) if translate else header
-    text = english( text ) if translate else text
-    st.header( header )
-    st.write( text )
+    draw(header,text)

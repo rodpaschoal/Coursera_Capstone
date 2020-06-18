@@ -6,5 +6,6 @@ psycopg2-binary
 googletrans
 plotly
 selenium
+lxml
 bs4
 sklearn
