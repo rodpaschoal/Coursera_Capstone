@@ -65,8 +65,34 @@ with st.echo('below'):
 
         #Introduction
         header = 'Introdução'
-        introduction = 'O condomínio Península foi construída para trazer o contato com a natureza e a liberdade. As pessoas desfrutam do ar puro nas suas ruas arborizadas e aproveitam os parques com seus familiares.\n\n Apesar do cenário de chácara, o condomínio está no coração da Barra da Tijuca, com facilidades a poucos metros de caminhada.\n\n Essa página se destina àqueles interessados em conhecer mais sobre essa linda vizinhança.\n\n**Business Problem**\n\nAgora, vamos supor que você amou a vizinhança e deseja comprar um imóvel na Península. Como encontrar as melhores ofertas do mercado? Como fechar um bom negócio? '
+        introduction = 'O condomínio Península foi construída para trazer o contato com a natureza e a liberdade. As pessoas desfrutam do ar puro nas suas ruas arborizadas e aproveitam os parques com seus familiares.\n\n Apesar do cenário de chácara, o condomínio está no coração da Barra da Tijuca, com facilidades a poucos metros de caminhada.\n\n Essa página se destina àqueles interessados em conhecer mais sobre essa linda vizinhança.'
         draw(header, introduction)
+
+        sub = 'Business Problem'
+        st.subheader( sub )
+        text ='Agora, vamos supor que você amou a vizinhança e deseja comprar um imóvel na Península. Como encontrar as melhores ofertas do mercado? Como fechar um bom negócio? '
+        text = english(text) if translate else text
+        st.write( text )
+
+        text = 'Para encontrar uma boa oferta, costumamos filtrar e ordenar os resultados em páginas de busca de imóveis.'
+        text = english(text) if translate else text
+        st.write( text )
+
+        text = 'Apesar de intuitivo, pode ser exaustivo quando existem milhares de anúncios para analisar em apenas um bairro.'
+        text = english(text) if translate else text
+        st.write( text )
+
+        text = 'Sem contar que pode nos levar ao erro, pois quando filtramos para apartamentos com 2 quartos, podemos estar perdendo a oportunidade de ver um apartamento com 3 quartos que está sendo vendido pelo mesmo preço, por exemplo. '
+        text = english(text) if translate else text
+        st.write( text )
+
+        text = 'No final, temos que filtrar diversas vezes para encontrar boas ofertas e repetir o processo sempre que anúncios são inseridos ou atualizados na base.'
+        text = english(text) if translate else text
+        st.write( text )
+
+        text = 'Será que é possível facilitar essa tarefa? Haveria uma ferramenta mais automatizada?'
+        text = english(text) if translate else text
+        st.write( text )
 
     #Data
     if data:
@@ -620,30 +646,22 @@ with st.echo('below'):
 
     if conclusion:
         header = 'Conclusão'
-        text = 'Para encontrar uma boa oferta, costumamos filtrar e ordenar os resultados em páginas de busca de imóveis.'
+        text = 'Para encontrar uma boa oferta, costumamos filtrar e ordenar manualmente os resultados em páginas de busca de imóveis diversas vezes e repetimos o procedimento quando os anúncios são atualizados.'
         draw(header,text)
 
-        text = 'Apesar de intuitivo, pode ser exaustivo quando existem milhares de anúncios para analisar em apenas um bairro.'
+        text = 'Com DBSCAN, a gente faz uma busca automática e consegue identificar os apartamentos com as mesmas características (área, dormitórios, banheiros, vagas de garagem e localização) porém com preços totalmente diferentes.'
         text = english(text) if translate else text
         st.write( text )
 
-        text = 'Sem contar que pode nos levar ao erro, pois quando filtramos para apartamentos com 2 quartos, podemos estar perdendo a oportunidade de ver um apartamento com 3 quartos que está sendo vendido pelo mesmo preço, por exemplo.'
+        text = 'No presente estudo de caso, o modelo analisa cerca de 2000 anúncios na Península em tempo real, i.e., sempre que entram anúncios novos ele refaz novamente o processo.'
         text = english(text) if translate else text
         st.write( text )
 
-        text = 'Com o DBSCAN, um modelo de identificação de clusters, nós mostramos que é possível encontrar apartamentos com as mesmas características (área, dormitórios, banheiros, vagas de garagem e localização), porém com preços totalmente diferentes.'
+        text = 'Na seção \"Discussão\" vemos que é possível economizar até 75% do preço. Essa é uma interessante evidência de como a inteligência artificial pode ajudar pessoas a fazer melhores escolhas.'
         text = english(text) if translate else text
         st.write( text )
 
-        text = 'O que é interessante é que o modelo conseguiu capturar isso para todas as combinações possíveis em um bairro, analisando cerca de 2000 anúncios em tempo real, i.e., sempre que entram anúncios novos ele refaz novamente o processo.'
-        text = english(text) if translate else text
-        st.write( text )
-
-        text = 'Na seção \"Discussão\" vimos que é possível economizar até 75% do preço. Essa é uma interessante evidência de como a inteligência artificial pode ajudar pessoas a fazer melhores escolhas.'
-        text = english(text) if translate else text
-        st.write( text )
-
-        text = 'Espero que esse projeto contribuir de alguma forma e estou muito feliz de compartilhá-lo para o mundo.'
+        text = 'Espero que esse projeto possa contribuir de alguma forma e estou muito feliz de compartilhá-lo para o mundo.'
         text = english(text) if translate else text
         st.write( text )
 
