@@ -25,7 +25,7 @@ with st.echo('below'):
     curpath = os.path.dirname(os.path.abspath(__file__))
 
     #Sidebar widgets
-    language = st.sidebar.selectbox('Language',['English','Português'])
+    language = st.sidebar.selectbox('Language',['Português','English'])
     translate = True if language == 'English' else False
 
     st.sidebar.subheader('Sections')
