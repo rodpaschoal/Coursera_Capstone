@@ -352,13 +352,16 @@ with st.echo('below'):
     
         @st.cache
         def clean_dataset( df3 ):
-            df3['link'] = 'www.vivareal.com.br' + df3['link']
-            df3['link'] = df3['link'].str.strip('/?__vt=vt:a')
-            df3['link'] = df3['link'].str.strip('/?__vt=vt:b')
-            df3['link'] = df3['link'].str.strip('/?__vt=vt:c')
-            df3['link'] = df3['link'].str.strip('/?__vt=il')
-            df3['vivareal-id'] = df3['link'].str[-10:]
-            df3['vivareal-id'] = df3['vivareal-id'].str.strip('d-') 
+            df3['link'] = 'https://www.vivareal.com.br' + df3['link']
+
+            df3['vivareal-id'] = df3['link'].apply( lambda x: x.split('-')[-1].split('/')[0] )
+            #df3['link'] = df3['link'].str.strip('/?__vt=vt:a')
+            #df3['link'] = df3['link'].str.strip('/?__vt=vt:b')
+            #df3['link'] = df3['link'].str.strip('/?__vt=vt:c')
+            #df3['link'] = df3['link'].str.strip('/?__vt=il')
+            #df3['vivareal-id'] = df3['link'].str[-10:]
+            #df3['vivareal-id'] = df3['vivareal-id'].str.strip('d-') 
+
             df3['price'] = df3['price'].str.strip().str.strip('R$').str.replace('.','')
             df3['condo'] = df3['condo'].str.strip().str.strip('R$').str.replace('.','')
 
@@ -505,21 +508,21 @@ with st.echo('below'):
         
         #Visualize clusters
         fig = px.scatter_3d(df3, 
-                        x='price',
+                        x='price/m2',
                         y='address', 
                         z='rooms', 
                         color='cluster',
                         #size='rooms', 
-                        hover_data=['price','rooms','bathroom','garages','condo','vivareal-id','address'])
-
-        #fig = px.box(df3, x="address", y="price/m2")
-        #fig.update_layout(yaxis=dict(range=[5000,16000]))
+                        hover_data=['price','rooms','bathroom','garages','condo','vivareal-id','address'],
+                        color_discrete_sequence=px.colors.qualitative.G10
+                        )
         st.write( fig )
 
         #Print dataframe with filters filters
         cols = ['cluster','vivareal-id','price/m2','price','area','rooms','address','bathroom','garages','condo']
         df3 = df3[cols]        
         df3['cluster'] = df3['cluster'].astype('int')
+        df3.sort_values('cluster', inplace=True )
         st.write( df3 )
 
         if n > 0:
@@ -536,8 +539,20 @@ with st.echo('below'):
 
         if st.checkbox('Create Links'):
             for link in small_best_deals['link']: 
-                link = 'https://' + link
                 st.write( link )
+
+    if discussion:
+        header = 'Discussão'
+        text = 'Na tabela abaixo pode ser verificado o dataframe no qual cada linha é um cluster identificado pelo algoritmo.'
+        draw(header,text)
+
+        df3_by_cluster = df3.groupby('cluster').mean()
+        df3_by_cluster['n_samples'] = df3.groupby('cluster').count()['price']
+        df3_by_cluster['address'] = df3.groupby('cluster').first()['address']
+        df3_by_cluster = df3_by_cluster[['n_samples','address','price/m2','price','area','rooms','bathroom','garages','condo']]
+
+        st.write( df3_by_cluster )
+
 
     #Gallery
     if gallery:
